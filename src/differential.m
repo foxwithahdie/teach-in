@@ -1,6 +1,6 @@
 function d = differential(vector1,vector2)
   arguments
-    vector1 double
+    vector1 (:,1) double
     vector2 double = []
   end
   

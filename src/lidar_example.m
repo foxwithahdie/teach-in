@@ -15,7 +15,8 @@ sensors = neatov3.receive();
 % sensors.ranges
 %polarplot(sensors.thetasInRadians, sensors.ranges, "o", Color=[1, 0, 0]);
 [x, y] = polar_to_cartesian(sensors.ranges, sensors.thetasInRadians);
-plot(x, y, "."); hold on; plot(0, 0, ".", MarkerSize=5)
+plot(-y, x, "."); hold on; plot(0, 0, ".", MarkerSize=20)
+plot([0, 1], [0, 1]);
 title("Neato LiDAR 360 degree Plot")
 sensors = neatov3.receive();
 disp("disconnected");

@@ -33,16 +33,9 @@ while toc <= total_time
     neato_pos_y = integration(neato_velocity_y, time, 0);
     
     [lidar_x, lidar_y] = polar_to_cartesian(sensors.ranges, sensors.thetasInRadians);
-    plot(-lidar_y, lidar_x, "."); hold on
-        plot(final_position - [neato_pos_x(end), neato_pos_y(end)], ".", Color="red", MarkerSize=20)
-        plot(0, 0, ".", MarkerSize=20, Color=[0.3, 0.3, 1])
-    hold off
+    
     % change tactics if neato is within a distance to a dot (obstacle).
     pause(1);
-
-    if (any((0.1<lidar_x & lidar_x < 0.5)) && any((0.2<lidar_y & lidar_y<0.7)))
-        break;
-    end
 end
 
 sensors = neatov3.receive();

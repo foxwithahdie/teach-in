@@ -31,6 +31,8 @@ while toc <= total_time
     neato_velocity_y = speed .* rotation_vector_y(1:end-1);
     neato_pos_x = integration(neato_velocity_x, time, 0);
     neato_pos_y = integration(neato_velocity_y, time, 0);
+
+    %plot_lidar_data = [-lidar_y,lidar_x]
     
     [lidar_x, lidar_y] = polar_to_cartesian(sensors.ranges, sensors.thetasInRadians);
     plot(-lidar_y, lidar_x, "."); hold on
@@ -40,7 +42,29 @@ while toc <= total_time
     % change tactics if neato is within a distance to a dot (obstacle).
     pause(1);
 
-    if (any((0.1<lidar_x & lidar_x < 0.5)) && any((0.2<lidar_y & lidar_y<0.7)))
+    left_most_threshold = -0.4;
+    right_most_threshold = 0.4;
+    
+    upper_limit_threshold = 0.7;
+    lower_limit_threshold = 0.2;
+    
+
+    if (any((left_most_threshold<lidar_y & lidar_y < right_most_threshold)) & any((lower_limit_threshold<lidar_x & lidar_x<upper_limit_threshold)))
+            
+        upper_crossing_points = find((lower_limit_threshold<lidar_x & lidar_x<upper_limit_threshold))
+        
+        focus_point_y = lidar_x(min(upper_crossing_points))
+        focus_point_x = lidar_y(min(upper_crossing_points))
+
+        focus_point = [focus_point_x, focus_point_y]
+
+        %points of a single obsticle are within 0.02 away from each other on the x axis
+        %within 0.015 on the y axis.
+
+        %find leftmost point of obstacle.   
+       
+           closest_right_element = max(find( (focus_point_x<lidar_y & lidar_y < focus_point_x+0.02)  & (focus_point_y<lidar_x & lidar_x < focus_point_y+0.015 )))
+           %new_focus_point = [lidar_y(closest_element), lidar_x(closest_element)]
         break;
     end
 end

@@ -105,7 +105,8 @@ while toc <= total_time
     end
    
     
-    
+    next_point_x_threshold = 0.02;
+    next_point_y_threshold = 0.03;
 
     if(~isempty(focus_point))
 
@@ -119,8 +120,8 @@ while toc <= total_time
             
             while ~isempty( ...
                     find( ...
-                    within_threshold(coordinate_x, furthest_right_point(1), furthest_right_point(1) + 0.02) & ...
-                    within_threshold(coordinate_y, furthest_right_point(2) - 0.03, furthest_right_point(2) + 0.03) ...
+                    within_threshold(coordinate_x, furthest_right_point(1), furthest_right_point(1) + next_point_x_threshold) & ...
+                    within_threshold(coordinate_y, furthest_right_point(2) - next_point_y_threshold, furthest_right_point(2) + next_point_y_threshold) ...
                     ) ...
                 )
                 
@@ -128,8 +129,8 @@ while toc <= total_time
                 neato_curr_vel_right = 0;
                 
                 closest_right_index = find( ...
-                    within_threshold(coordinate_x, furthest_right_point(1), furthest_right_point(1) + 0.02) & ...
-                    within_threshold(coordinate_y, furthest_right_point(2) - 0.03, furthest_right_point(2) + 0.03) ...
+                    within_threshold(coordinate_x, furthest_right_point(1), furthest_right_point(1) + next_point_x_threshold) & ...
+                    within_threshold(coordinate_y, furthest_right_point(2) - next_point_y_threshold, furthest_right_point(2) + next_point_y_threshold) ...
                 )
             
                 furthest_right_point = [coordinate_x(closest_right_index),coordinate_y(closest_right_index)];
@@ -142,14 +143,14 @@ while toc <= total_time
 
                 
             while ~ isempty(find( ...
-                    within_threshold(coordinate_x, furthest_left_point(1) - 0.02, furthest_left_point(1)) & ...
-                    within_threshold(coordinate_y, furthest_left_point(2) - 0.03, furthest_left_point(2) + 0.03) ...
+                    within_threshold(coordinate_x, furthest_left_point(1) - next_point_x_threshold, furthest_left_point(1)) & ...
+                    within_threshold(coordinate_y, furthest_left_point(2) - next_point_y_threshold, furthest_left_point(2) + next_point_y_threshold) ...
                 ))
                 neato_curr_vel_left = 0;
                 neato_curr_vel_right = 0;
                 furthest_left_index = find( ...
-                    within_threshold(coordinate_x, furthest_left_point(1) - 0.02, furthest_left_point(1)) & ...
-                    within_threshold(coordinate_y, furthest_left_point(2) - 0.03, furthest_left_point(2) + 0.03) ...
+                    within_threshold(coordinate_x, furthest_left_point(1) - next_point_x_threshold, furthest_left_point(1)) & ...
+                    within_threshold(coordinate_y, furthest_left_point(2) - next_point_y_threshold, furthest_left_point(2) + next_point_y_threshold) ...
                 )
     
                 furthest_left_point = [coordinate_x(furthest_left_index),coordinate_y(furthest_left_index)];
@@ -167,21 +168,30 @@ while toc <= total_time
         end
 
         %Neato Rotation vector starts at around 1.57 radians ~90 degrees
+       
 
+        buffer_distance = 0.3
+        %go slightly further than obstacle detection before stopping
         if(distance_to_furthest_right<=distance_to_furthest_left)
             %turn right
 
-            if (rotation_vector(end) > 0.8)
+            if (rotation_vector(end) > 0.785) %pi/4
                  disp("turn right");
                  neato_curr_vel_right = -0.1;
                  neato_curr_vel_left = 0.1;
                  
                 disp("turn right")
-                rotation_vector(end)
+                
             else
                 %when it stops turning, just stop.
                 disp("I didn't turn right")
-                 break;
+                    neato_curr_vel_right = 0.1;
+                    neato_curr_vel_left = 0.1;
+                if neato_pos_x(end) > furthest_right_point(1)+buffer_distance
+                    
+                    break
+                end
+                 
             end
 
             
@@ -189,17 +199,22 @@ while toc <= total_time
            %rotation vector is 90 degrees
         else
             %turn left
-            if (rotation_vector(end) < 2.35)
+            if (rotation_vector(end) < 2.356) % 3*pi/4
                  disp("turn left");
-                 rotation_vector(end)
+                 
                  neato_curr_vel_right = 0.1;
                  neato_curr_vel_left = -0.1;
                  
                 
             else
                 %when it stops turning, just stop.
-                disp("I didn't turn left")
-                 break;
+                    neato_curr_vel_right = 0.1;
+                    neato_curr_vel_left = 0.1;
+                if neato_pos_x(end) < furthest_left_point(1)-buffer_distance
+                    
+                    break;
+                end
+                 
             end
             
         end

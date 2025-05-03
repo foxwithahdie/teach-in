@@ -15,6 +15,14 @@ neato_curr_vel_left = v0;
 neato_curr_vel_right = v0;
 
 final_position = [0 10]
+determine_point_runs = 0
+focus_point = [];
+
+disp("start")
+
+within_threshold = @(reference,lowest,biggest) ( ...
+        (lowest< reference & reference < biggest) ...
+        )
 
 while toc <= total_time
     neatov3.setVelocities(neato_curr_vel_left, neato_curr_vel_right);
@@ -34,7 +42,7 @@ while toc <= total_time
     neato_pos_x = integration(neato_velocity_x, time, 0);
     neato_pos_y = integration(neato_velocity_y, time, 0);
 
-    %plot_lidar_data = [-lidar_y,lidar_x]
+    
     
     [lidar_x, lidar_y] = polar_to_cartesian(sensors.ranges, sensors.thetasInRadians);
     plot(-lidar_y, lidar_x, "."); hold on
@@ -42,7 +50,7 @@ while toc <= total_time
         plot(0, 0, ".", MarkerSize=20, Color=[0.3, 0.3, 1])
     hold off
     % change tactics if neato is within a distance to a dot (obstacle).
-    pause(1);
+    %pause(.2);
     
     coordinate_x = -1*lidar_y;
     coordinate_y = lidar_x;
@@ -52,31 +60,154 @@ while toc <= total_time
     
     upper_limit_threshold = 0.7;
     lower_limit_threshold = 0.2;
-    
-    for i = 1:360
-        (left_most_threshold<coordinate_x(i) & coordinate_x(i) < right_most_threshold) & (lower_limit_threshold<coordinate_y(i) & coordinate_y(i)<upper_limit_threshold)
-        
-        if ( (left_most_threshold<coordinate_x(i) & coordinate_x(i) < right_most_threshold) & (lower_limit_threshold<coordinate_y(i) & coordinate_y(i)<upper_limit_threshold) )
-            
-        focus_point = [coordinate_x(i) coordinate_y(i)]  
-        break;
-    
-        % 
-        % %points of a single obsticle are within 0.02 away from each other on the x axis
-        % %within 0.015 on the y axis.
-        % 
-        % %find leftmost point of obstacle.   
-        % 
-        %closest_right_index = find( (focus_point(1)<coordinate_x & coordinate_x < focus_point(1)+0.02)  & (focus_point(2)-0.015<coordinate_y & coordinate_y < focus_point(2)+0.015 ))
-        
-       % closest_right_point = [coordinate_x(closest_right_index),coordinate_y(closest_right_index)]
 
-           %new_focus_point = [lidar_y(closest_element), lidar_x(closest_element)]
-        
+    
+    if (determine_point_runs ==0)
+        %create separate plot that identifies left and right obstacle coordinates
+        [lidar_x, lidar_y] = polar_to_cartesian(sensors.ranges, sensors.thetasInRadians);
+        plot(-lidar_y, lidar_x, "."); hold on
+            plot(final_position - [neato_pos_x(end), neato_pos_y(end)], ".", Color="blue", MarkerSize=20)
+            plot(0, 0, ".", MarkerSize=20, Color=[0, 0, 0])
+        hold off
+    coordinate_x = -1*lidar_y;
+    coordinate_y = lidar_x;
+    
+    % differential = @(vector1, vector2) diff(vector1) ./ diff(vector2);
+    % 
+    % differential(vector1, vector2)
+
+
+   
+    %Bounding box around neato (range that triggers obstacles)
+    left_most_threshold = -0.4;
+    right_most_threshold = 0.4;
+    
+    upper_limit_threshold = 0.7;
+    lower_limit_threshold = 0.2;
+  
+        for i = 1:360
+               % change tactics if neato is within a distance to a dot (obstacle).
+
+            
+            if ( within_threshold(coordinate_x(i),left_most_threshold,right_most_threshold ) & ...
+                 within_threshold(coordinate_y(i), lower_limit_threshold,upper_limit_threshold))
+                                    
+                focus_point = [coordinate_x(i) coordinate_y(i)] ; 
+                neato_curr_vel_left = 0;
+                neato_curr_vel_right = 0;
+                break
+    
+            end
+
         end
-    break;
+        
+        
     end
-    % break;
+   
+    
+    
+
+    if(~isempty(focus_point))
+
+        if(determine_point_runs == 0)
+
+            furthest_right_point = focus_point
+            furthest_left_point = focus_point
+
+            disp("Beginning points")
+            
+            
+            while ~isempty( ...
+                    find( ...
+                    within_threshold(coordinate_x, furthest_right_point(1), furthest_right_point(1) + 0.02) & ...
+                    within_threshold(coordinate_y, furthest_right_point(2) - 0.03, furthest_right_point(2) + 0.03) ...
+                    ) ...
+                )
+                
+                neato_curr_vel_left = 0;
+                neato_curr_vel_right = 0;
+                
+                closest_right_index = find( ...
+                    within_threshold(coordinate_x, furthest_right_point(1), furthest_right_point(1) + 0.02) & ...
+                    within_threshold(coordinate_y, furthest_right_point(2) - 0.03, furthest_right_point(2) + 0.03) ...
+                )
+            
+                furthest_right_point = [coordinate_x(closest_right_index),coordinate_y(closest_right_index)];
+                
+                disp("finish furthest right")
+            
+            
+            end
+
+
+                
+            while ~ isempty(find( ...
+                    within_threshold(coordinate_x, furthest_left_point(1) - 0.02, furthest_left_point(1)) & ...
+                    within_threshold(coordinate_y, furthest_left_point(2) - 0.03, furthest_left_point(2) + 0.03) ...
+                ))
+                neato_curr_vel_left = 0;
+                neato_curr_vel_right = 0;
+                furthest_left_index = find( ...
+                    within_threshold(coordinate_x, furthest_left_point(1) - 0.02, furthest_left_point(1)) & ...
+                    within_threshold(coordinate_y, furthest_left_point(2) - 0.03, furthest_left_point(2) + 0.03) ...
+                )
+    
+                furthest_left_point = [coordinate_x(furthest_left_index),coordinate_y(furthest_left_index)];
+
+                
+            
+            end
+            
+            %determine which point is closest to (0,0)
+    
+                distance_to_furthest_left = sqrt( (furthest_left_point(1))^2 + (furthest_left_point(2))^2 );
+                distance_to_furthest_right = sqrt( (furthest_right_point(1))^2 + (furthest_right_point(2))^2 );
+    
+                determine_point_runs = 1
+        end
+
+        %Neato Rotation vector starts at around 1.57 radians ~90 degrees
+
+        if(distance_to_furthest_right<=distance_to_furthest_left)
+            %turn right
+
+            if (rotation_vector(end) > 0.8)
+                 disp("turn right");
+                 neato_curr_vel_right = -0.1;
+                 neato_curr_vel_left = 0.1;
+                 
+                disp("turn right")
+                rotation_vector(end)
+            else
+                %when it stops turning, just stop.
+                disp("I didn't turn right")
+                 break;
+            end
+
+            
+           %right w neg, left wheel pos
+           %rotation vector is 90 degrees
+        else
+            %turn left
+            if (rotation_vector(end) < 2.35)
+                 disp("turn left");
+                 rotation_vector(end)
+                 neato_curr_vel_right = 0.1;
+                 neato_curr_vel_left = -0.1;
+                 
+                
+            else
+                %when it stops turning, just stop.
+                disp("I didn't turn left")
+                 break;
+            end
+            
+        end
+
+
+        %break
+    end
+    
 end
 
 sensors = neatov3.receive();

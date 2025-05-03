@@ -14,6 +14,8 @@ v0 = 0.1;
 neato_curr_vel_left = v0;
 neato_curr_vel_right = v0;
 
+final_position = [0 10]
+
 while toc <= total_time
     neatov3.setVelocities(neato_curr_vel_left, neato_curr_vel_right);
     sensors = neatov3.receive();
@@ -41,32 +43,40 @@ while toc <= total_time
     hold off
     % change tactics if neato is within a distance to a dot (obstacle).
     pause(1);
-
+    
+    coordinate_x = -1*lidar_y;
+    coordinate_y = lidar_x;
+    
     left_most_threshold = -0.4;
     right_most_threshold = 0.4;
     
     upper_limit_threshold = 0.7;
     lower_limit_threshold = 0.2;
     
-
-    if (any((left_most_threshold<lidar_y & lidar_y < right_most_threshold)) & any((lower_limit_threshold<lidar_x & lidar_x<upper_limit_threshold)))
-            
-        upper_crossing_points = find((lower_limit_threshold<lidar_x & lidar_x<upper_limit_threshold))
+    for i = 1:360
+        (left_most_threshold<coordinate_x(i) & coordinate_x(i) < right_most_threshold) & (lower_limit_threshold<coordinate_y(i) & coordinate_y(i)<upper_limit_threshold)
         
-        focus_point_y = lidar_x(min(upper_crossing_points))
-        focus_point_x = lidar_y(min(upper_crossing_points))
-
-        focus_point = [focus_point_x, focus_point_y]
-
-        %points of a single obsticle are within 0.02 away from each other on the x axis
-        %within 0.015 on the y axis.
-
-        %find leftmost point of obstacle.   
-       
-           closest_right_element = max(find( (focus_point_x<lidar_y & lidar_y < focus_point_x+0.02)  & (focus_point_y<lidar_x & lidar_x < focus_point_y+0.015 )))
-           %new_focus_point = [lidar_y(closest_element), lidar_x(closest_element)]
+        if ( (left_most_threshold<coordinate_x(i) & coordinate_x(i) < right_most_threshold) & (lower_limit_threshold<coordinate_y(i) & coordinate_y(i)<upper_limit_threshold) )
+            
+        focus_point = [coordinate_x(i) coordinate_y(i)]  
         break;
+    
+        % 
+        % %points of a single obsticle are within 0.02 away from each other on the x axis
+        % %within 0.015 on the y axis.
+        % 
+        % %find leftmost point of obstacle.   
+        % 
+        %closest_right_index = find( (focus_point(1)<coordinate_x & coordinate_x < focus_point(1)+0.02)  & (focus_point(2)-0.015<coordinate_y & coordinate_y < focus_point(2)+0.015 ))
+        
+       % closest_right_point = [coordinate_x(closest_right_index),coordinate_y(closest_right_index)]
+
+           %new_focus_point = [lidar_y(closest_element), lidar_x(closest_element)]
+        
+        end
+    break;
     end
+    % break;
 end
 
 sensors = neatov3.receive();

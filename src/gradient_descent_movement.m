@@ -53,13 +53,13 @@ while toc <= total_time
     tangent_vec_x = velocity_x ./ norm(velocity_x);
     tangent_vec_y = velocity_y ./ norm(velocity_y);
 
-    q_vec_x = diff(tangent_vec_x);
-    q_vec_y = diff(tangent_vec_y);
+    q_vec_x = diff(tangent_vec_x)
+    q_vec_y = diff(tangent_vec_y)
 
-    ang_vel = (tangent_vec_x .* q_vec_y) - (tangent_vec_y .* q_vec_x);
+    ang_vel = (tangent_vec_x(1:end-1) .* q_vec_y) - (tangent_vec_y(1:end-1) .* q_vec_x);
     
-    vl = speed - ((d/2)*ang_vel) 
-    vr = speed + ((d/2)*ang_vel)
+    vl = (speed - ((d/2)*ang_vel)) / 15
+    vr = (speed + ((d/2)*ang_vel)) / 15
     
     [lidar_x, lidar_y] = polar_to_cartesian(sensors.ranges, sensors.thetasInRadians);
     
